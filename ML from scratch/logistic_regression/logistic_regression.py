@@ -57,3 +57,28 @@ class LogisticRegression(BaseModel):
             else:
                 y[i] = 0
         return y
+
+
+class SotfmaxRegression(BaseModel):
+    def __init__(self, num_epochs=500, learning_rate=0.01):
+        self.num_epochs = num_epochs
+        self.learning_rate = learning_rate
+
+
+    def fit(self, X, y):
+        X = self.prepare_features(X)
+        self.labels = np.array(list(set(y)))
+        self.parameters = np.zeros((X.shape[1], len(self.labels)))
+        num_of_samples = X.shape[0]
+        for epoch in tqdm(range(self.num_epochs)):
+            for num_of_label, label in enumerate(self.labels):
+                w = self.parameters[:, num_of_label] 
+                w = w.reshape(-1, 1)
+
+                grad = np.zeros((X.shape[1], 1))
+                for i in range(num_of_samples):
+                    y_k = 1 if y[i] == label else 0
+                    x = X[i].reshape(-1, 1)
+                    grad += (self.sigmoid(w.T@x)-y_k)*x 
+                w -= self.learning_rate*grad
+                self.parameters[:, num_of_label] = w.reshape(-1)
