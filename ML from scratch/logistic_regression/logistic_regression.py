@@ -82,3 +82,21 @@ class SotfmaxRegression(BaseModel):
                     grad += (self.sigmoid(w.T@x)-y_k)*x 
                 w -= self.learning_rate*grad
                 self.parameters[:, num_of_label] = w.reshape(-1)
+
+    def predict(self, X):
+        self.check_dimensions(X, self.parameters)
+        X = self.prepare_features(X)
+        num_of_labels = len(self.labels)
+        y = np.zeros(X.shape[0])
+
+        for i in range(len(X)):
+            predictions = []
+            x = X[i]
+            for label_params in range(num_of_labels):
+                w = self.parameters[:, label_params]
+                predictions.append(self.sigmoid(np.dot(w, x)))
+            predictions = np.array(predictions)
+            predictions = predictions/np.sum(predictions)
+            y[i] = self.labels[np.argmax(predictions)]
+        
+        return y
