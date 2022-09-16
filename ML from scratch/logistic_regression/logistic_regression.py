@@ -14,18 +14,17 @@ class BaseModel:
         return 1/(1+np.exp(-x))
 
     @staticmethod
-    def prepare_features(x):
+    def _prepare_features(x):
         return np.concatenate((x, np.ones((x.shape[0], 1))), axis=1)
 
     def _check_fitted(self):
         if not hasattr(self, 'parameters'):
             raise AttributeError("Model must be trained before making predictions.")
 
-    def check_dimensions(self, X, parameters):
-        if X.shape[1]+1 == parameters.shape[0]:
-            pass
-        else:
+    def _check_dimensions(self, X, parameters):
+        if X.shape[1]+1 != parameters.shape[0]:
             raise ValueError("Expected 2D array, use np.reshape() to get correct dimensions.")
+            
 
 
 class LogisticRegression(BaseModel):
@@ -35,7 +34,7 @@ class LogisticRegression(BaseModel):
         self.threshold = threshold
     
     def fit(self, X, y):
-        X = self.prepare_features(X)
+        X = self._prepare_features(X)
         self.parameters = np.zeros((X.shape[1], 1))
         num_of_samples = X.shape[0]
         
@@ -47,7 +46,8 @@ class LogisticRegression(BaseModel):
             self.parameters -= self.learning_rate*grad
 
     def predict(self, X):
-        X = self.prepare_features(X)
+        self._check_dimensions(X, self.parameters)
+        X = self._prepare_features(X)
         y = np.zeros(X.shape[0])
         self._check_fitted()
         for i in range(len(X)):
