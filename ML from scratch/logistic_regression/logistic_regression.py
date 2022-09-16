@@ -1,8 +1,34 @@
-from re import L
 import numpy as np
 from tqdm import tqdm
 
-class LogisticRegression:
+
+class BaseModel:
+    def fit(self, X, y):
+        raise NotImplementedError()
+
+    def predict(self, X):
+        raise NotImplementedError()
+
+    @staticmethod
+    def sigmoid(x):
+        return 1/(1+np.exp(-x))
+
+    @staticmethod
+    def prepare_features(x):
+        return np.concatenate((x, np.ones((x.shape[0], 1))), axis=1)
+
+    def _check_fitted(self):
+        if not hasattr(self, 'parameters'):
+            raise AttributeError("Model must be trained before making predictions.")
+
+    def check_dimensions(self, X, parameters):
+        if X.shape[1]+1 == parameters.shape[0]:
+            pass
+        else:
+            raise ValueError("Expected 2D array, use np.reshape() to get correct dimensions.")
+
+
+class LogisticRegression(BaseModel):
     def __init__(self, num_epochs=500, learning_rate=0.01, threshold=0.5):
         self.num_epochs = num_epochs
         self.learning_rate = learning_rate
@@ -31,15 +57,3 @@ class LogisticRegression:
             else:
                 y[i] = 0
         return y
-
-    def _check_fitted(self):
-        if not hasattr(self, 'parameters'):
-            raise AttributeError("Model must be trained before making predictions.")
-
-    @staticmethod
-    def prepare_features(x):
-        return np.concatenate((x, np.ones((x.shape[0], 1))), axis=1)
-
-    @staticmethod
-    def sigmoid(x):
-        return 1/(1+np.exp(-x))
