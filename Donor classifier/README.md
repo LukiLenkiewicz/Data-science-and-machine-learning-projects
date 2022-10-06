@@ -1,0 +1,1 @@
+Using machine learning and statistics to predict whether a person is capable of giving a donation for Vietnam War veterans or not.
