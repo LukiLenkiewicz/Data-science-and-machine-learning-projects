@@ -26,3 +26,15 @@ def calculate_profit(y_true, y_pred):
         if p == 1:
             profit -= 0.69
     return profit
+
+
+def dataset_balancer(X_train, y_train, method='undersampler'):
+    if method == 'undersampler':
+        rus = RandomUnderSampler(random_state=42)
+        X_train, y_train = rus.fit_resample(X_train, y_train)
+        return X_train, y_train
+    elif method == 'oversampler':
+        over_sampler = SMOTE(random_state=42)
+        X_train, y_train = over_sampler.fit_resample(X_train, y_train)
+    else:
+        return X_train, y_train
