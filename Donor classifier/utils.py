@@ -38,3 +38,13 @@ def dataset_balancer(X_train, y_train, method='undersampler'):
         X_train, y_train = over_sampler.fit_resample(X_train, y_train)
     else:
         return X_train, y_train
+    
+    
+def find_redundant_features(corr_matrix, corr_coef= .9):
+    corr_matrix_columns = corr_matrix.columns    
+    redundant_features = []
+    for i in range(corr_matrix.shape[0]):
+        for j in range(i+1, corr_matrix.shape[1]):
+            if corr_matrix.iloc[i, j] >= corr_coef:
+                redundant_features.append(corr_matrix_columns[j])
+    return redundant_features
