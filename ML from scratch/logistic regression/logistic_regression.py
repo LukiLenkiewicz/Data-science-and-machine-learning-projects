@@ -26,7 +26,6 @@ class BaseModel:
             raise ValueError("Expected 2D array, use np.reshape() to get correct dimensions.")
             
 
-
 class LogisticRegression(BaseModel):
     def __init__(self, num_epochs=10000, learning_rate=0.01, threshold=0.5):
         self.num_epochs = num_epochs
