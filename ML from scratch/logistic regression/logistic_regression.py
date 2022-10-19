@@ -28,7 +28,7 @@ class BaseModel:
 
 
 class LogisticRegression(BaseModel):
-    def __init__(self, num_epochs=500, learning_rate=0.01, threshold=0.5):
+    def __init__(self, num_epochs=10000, learning_rate=0.01, threshold=0.5):
         self.num_epochs = num_epochs
         self.learning_rate = learning_rate
         self.threshold = threshold
@@ -36,13 +36,10 @@ class LogisticRegression(BaseModel):
     def fit(self, X, y):
         X = self._prepare_features(X)
         self.parameters = np.zeros((X.shape[1], 1))
-        num_of_samples = X.shape[0]
+        y = y.reshape(-1, 1)
         
         for epoch in tqdm(range(self.num_epochs)):
-            grad = np.zeros((X.shape[1], 1))
-            for i in range(num_of_samples):
-                x = X[i].reshape(-1, 1)
-                grad += (self.sigmoid(self.parameters.T@x)-y[i])*x
+            grad = X.T@(self.sigmoid(X@self.parameters) - y)
             self.parameters -= self.learning_rate*grad
 
     def predict(self, X):
@@ -50,13 +47,9 @@ class LogisticRegression(BaseModel):
         X = self._prepare_features(X)
         y = np.zeros(X.shape[0])
         self._check_fitted()
-        for i in range(len(X)):
-            x = X[i]
-            if self.sigmoid(self.parameters.T@x) >= self.threshold:
-                y[i] = 1
-            else:
-                y[i] = 0
-        return y
+        y = (self.sigmoid(X@self.parameters) >= self.threshold)
+
+        return y.reshape(-1).astype(int)
 
 
 class SotfmaxRegression(BaseModel):
@@ -64,39 +57,32 @@ class SotfmaxRegression(BaseModel):
         self.num_epochs = num_epochs
         self.learning_rate = learning_rate
 
-
     def fit(self, X, y):
-        X = self.prepare_features(X)
-        self.labels = np.array(list(set(y)))
-        self.parameters = np.zeros((X.shape[1], len(self.labels)))
-        num_of_samples = X.shape[0]
-        for epoch in tqdm(range(self.num_epochs)):
-            for num_of_label, label in enumerate(self.labels):
-                w = self.parameters[:, num_of_label] 
-                w = w.reshape(-1, 1)
+        X = self._prepare_features(X)
+        y = self.one_hot(y)
+        self.parameters = np.ones((X.shape[1], y.shape[1]))
 
-                grad = np.zeros((X.shape[1], 1))
-                for i in range(num_of_samples):
-                    y_k = 1 if y[i] == label else 0
-                    x = X[i].reshape(-1, 1)
-                    grad += (self.sigmoid(w.T@x)-y_k)*x 
-                w -= self.learning_rate*grad
-                self.parameters[:, num_of_label] = w.reshape(-1)
+        for epoch in tqdm(range(self.num_epochs)):
+            grad = X.T@(self.softmax(X@self.parameters) - y)
+            self.parameters -= self.learning_rate*grad
 
     def predict(self, X):
-        self.check_dimensions(X, self.parameters)
-        X = self.prepare_features(X)
-        num_of_labels = len(self.labels)
+        self._check_dimensions(X, self.parameters)
+        X = self._prepare_features(X)
         y = np.zeros(X.shape[0])
 
-        for i in range(len(X)):
-            predictions = []
-            x = X[i]
-            for label_params in range(num_of_labels):
-                w = self.parameters[:, label_params]
-                predictions.append(self.sigmoid(np.dot(w, x)))
-            predictions = np.array(predictions)
-            predictions = predictions/np.sum(predictions)
-            y[i] = self.labels[np.argmax(predictions)]
-        
-        return y
+        y = self.softmax(X@self.parameters)
+        return np.argmax(y, axis=1)
+
+    @staticmethod
+    def softmax(x):
+        return x/np.sum(x, axis=1, keepdims=True)
+
+    @staticmethod
+    def one_hot(y):
+        num_of_classes = len(np.unique(y))
+        y_one_hot = np.zeros((y.shape[0], num_of_classes))
+        for i in range(len(y_one_hot)):
+            y_one_hot[i, y[i]] = 1
+
+        return y_one_hot
